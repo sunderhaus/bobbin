@@ -6,3 +6,4 @@ services:
     environment:
       - RTSP_URL=${RTSP_URL:-rtsp://YOUR_RTSP_URL}
       - STREAM_KEY=${STREAM_KEY:-YOUR_STREAM_KEY}
+      - ENABLE_AUDIO=${ENABLE_AUDIO:-true}
