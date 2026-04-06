@@ -1,0 +1,18 @@
+# Ubuntu base required — NVIDIA's runtime libraries are glibc-linked,
+# incompatible with Alpine's musl libc
+FROM ubuntu:24.04
+
+# Install FFmpeg 8.x from PPA — Ubuntu 24.04's stock FFmpeg 6.1.1 doesn't
+# support tls_verify for RTSPS connections (needed for self-signed camera certs)
+RUN apt-get update && apt-get install -y --no-install-recommends software-properties-common \
+    && add-apt-repository -y ppa:ubuntuhandbook1/ffmpeg8 \
+    && apt-get update && apt-get install -y --no-install-recommends ffmpeg \
+    && apt-get purge -y software-properties-common \
+    && apt-get autoremove -y && rm -rf /var/lib/apt/lists/*
+
+ENV RTSP_URL=""
+ENV STREAM_KEY=""
+
+# Full GPU pipeline: NVDEC decode → CUDA scale → NVENC encode
+# Frames stay in GPU memory throughout, avoiding CPU↔GPU transfers
+CMD exec ffmpeg -nostdin -hwaccel cuda -hwaccel_output_format cuda -rtsp_transport tcp -tls_verify 0 -i "$RTSP_URL" -vf scale_cuda=2560:1440 -c:v h264_nvenc -preset p6 -b:v 13000k -maxrate 13000k -bufsize 26000k -g 60 -c:a aac -b:a 128k -f flv "rtmp://a.rtmp.youtube.com/live2/$STREAM_KEY"

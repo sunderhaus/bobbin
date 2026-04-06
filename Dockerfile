@@ -10,4 +10,4 @@ ENV STREAM_KEY=""
 
 # Use 'exec' so FFmpeg runs as PID 1. This allows Docker/k8s to gracefully
 # stop the process (SIGTERM) without it hanging.
-CMD exec ffmpeg -nostdin -rtsp_transport tcp -tls_verify 0 -i "$RTSP_URL" -vf scale=1920:1080 -c:v libx264 -preset veryfast -b:v 4500k -maxrate 4500k -bufsize 9000k -g 60 -c:a aac -b:a 128k -f flv "rtmp://a.rtmp.youtube.com/live2/$STREAM_KEY"
+CMD exec ffmpeg -nostdin -rtsp_transport tcp -tls_verify 0 -i "$RTSP_URL" -vf scale=2560:1440 -c:v libx264 -preset veryfast -b:v 9000k -maxrate 9000k -bufsize 18000k -g 60 -c:a aac -b:a 128k -f flv "rtmp://a.rtmp.youtube.com/live2/$STREAM_KEY"

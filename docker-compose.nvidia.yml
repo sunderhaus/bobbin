@@ -1,0 +1,12 @@
+services:
+  youtube-stream:
+    build:
+      context: .
+      dockerfile: Dockerfile.nvidia
+    deploy:
+      resources:
+        reservations:
+          devices:
+            - driver: nvidia
+              count: 1
+              capabilities: [gpu, video]

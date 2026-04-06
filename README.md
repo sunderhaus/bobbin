@@ -4,8 +4,7 @@ Relay an RTSPS stream to YouTube Live using FFmpeg in a lightweight Docker conta
 
 ## Prerequisites
 
-- [Docker](https://docs.docker.com/get-docker/)
-- [Docker Compose](https://docs.docker.com/compose/install/) (included with Docker Desktop)
+- [Podman](https://podman.io/docs/installation) with [Podman Compose](https://github.com/containers/podman-compose), or [Docker](https://docs.docker.com/get-docker/) with [Docker Compose](https://docs.docker.com/compose/install/)
 
 ## Setup
 
@@ -31,23 +30,52 @@ STREAM_KEY=xxxx-xxxx-xxxx-xxxx-xxxx
 
 ## Usage
 
-Build and start the container:
+### Podman (CPU)
+
+```bash
+podman compose up -d
+podman logs -f rtsp-youtube-stream
+podman compose down
+```
+
+### Podman with NVIDIA GPU
+
+```bash
+podman compose -f docker-compose.yml -f docker-compose.podman-nvidia.yml up -d
+podman logs -f rtsp-youtube-stream
+podman compose -f docker-compose.yml -f docker-compose.podman-nvidia.yml down
+```
+
+Requires [NVIDIA Container Toolkit](https://docs.nvidia.com/datacenter/cloud-native/container-toolkit/install-guide.html) with CDI configured:
+
+```bash
+sudo nvidia-ctk cdi generate --output=/etc/cdi/nvidia.yaml
+```
+
+### Docker (CPU)
 
 ```bash
 docker compose up -d
-```
-
-Check the logs to verify FFmpeg is streaming:
-
-```bash
 docker logs -f rtsp-youtube-stream
-```
-
-Stop the stream:
-
-```bash
 docker compose down
 ```
+
+### Docker with NVIDIA GPU
+
+```bash
+docker compose -f docker-compose.yml -f docker-compose.nvidia.yml up -d
+docker logs -f rtsp-youtube-stream
+docker compose -f docker-compose.yml -f docker-compose.nvidia.yml down
+```
+
+Requires [NVIDIA Container Toolkit](https://docs.nvidia.com/datacenter/cloud-native/container-toolkit/install-guide.html):
+
+```bash
+nvidia-ctk runtime configure --runtime=docker
+sudo systemctl restart docker
+```
+
+The GPU path uses NVDEC for decoding, CUDA for scaling, and NVENC for encoding — frames stay in GPU memory throughout the pipeline.
 
 ## How It Works
 

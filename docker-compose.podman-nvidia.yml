@@ -1,0 +1,9 @@
+services:
+  youtube-stream:
+    build:
+      context: .
+      dockerfile: Dockerfile.nvidia
+    devices:
+      - nvidia.com/gpu=0
+    security_opt:
+      - label=disable

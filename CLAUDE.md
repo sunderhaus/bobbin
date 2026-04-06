@@ -5,11 +5,13 @@ RTSPS-to-YouTube-Live relay. FFmpeg in a Docker container copies an RTSPS video 
 ## Project Structure
 
 ```
-Dockerfile          # Alpine Linux + FFmpeg, env-var-driven CMD
-docker-compose.yml  # Single service, auto-restart, env var interpolation from .env
-.env.example        # Template for required environment variables
-.gitignore          # Excludes .env (secrets)
-README.md           # User-facing setup and usage docs
+Dockerfile              # Alpine Linux + FFmpeg, CPU-only (default)
+Dockerfile.nvidia       # Ubuntu + FFmpeg with NVENC/CUDA, GPU-accelerated
+docker-compose.yml      # Single service, auto-restart, env var interpolation from .env
+docker-compose.nvidia.yml # Override: switches to Dockerfile.nvidia + GPU device reservation
+.env.example            # Template for required environment variables
+.gitignore              # Excludes .env (secrets)
+README.md               # User-facing setup and usage docs
 ```
 
 ## How It Works
@@ -33,9 +35,12 @@ Two required environment variables, set via `.env` file:
 
 ```bash
 cp .env.example .env   # fill in values
-docker compose up -d   # build and start
+docker compose up -d   # build and start (CPU)
 docker logs -f rtsp-youtube-stream  # verify
 docker compose down    # stop
+
+# With NVIDIA GPU acceleration:
+docker compose -f docker-compose.yml -f docker-compose.nvidia.yml up -d
 ```
 
 ## Design Decisions
@@ -45,3 +50,6 @@ docker compose down    # stop
 - **`restart: unless-stopped`**: Auto-recovers from FFmpeg crashes without manual intervention
 - **Video re-encoding to 1080p**: Camera outputs 2688x1512 which YouTube rejects; scaled to 1920x1080 with libx264 `veryfast` preset at 4500kbps (YouTube's recommended range for 1080p). Uses `-maxrate`/`-bufsize` for CBR-like output suitable for live streaming
 - **TLS verification disabled (`-tls_verify 0`)**: Cameras commonly use self-signed certificates; FFmpeg would reject the RTSPS connection without this flag
+- **Ubuntu for NVIDIA variant**: Alpine uses musl libc; NVIDIA's runtime libraries are glibc-linked. `dlopen()` of `libnvidia-encode.so` fails under musl, making Alpine incompatible with NVENC. Ubuntu is used only for the GPU path.
+- **Full GPU pipeline (`-hwaccel cuda -hwaccel_output_format cuda`)**: NVDEC decode → `scale_cuda` → NVENC encode keeps frames in GPU memory, avoiding CPU↔GPU transfers
+- **Compose override pattern**: `docker-compose.nvidia.yml` layers GPU config on top of the base compose file, keeping the default CPU path unchanged and portable
