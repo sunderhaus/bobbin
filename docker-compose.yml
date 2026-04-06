@@ -1,0 +1,8 @@
+services:
+  youtube-stream:
+    build: .
+    container_name: rtsp-youtube-stream
+    restart: unless-stopped
+    environment:
+      - RTSP_URL=${RTSP_URL:-rtsp://YOUR_RTSP_URL}
+      - STREAM_KEY=${STREAM_KEY:-YOUR_STREAM_KEY}

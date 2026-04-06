@@ -1,0 +1,69 @@
+{
+  "slug": "feat-rtsp-youtube-stream",
+  "title": "RTSP to YouTube Live streaming via FFmpeg in Docker",
+  "type": "feature",
+  "created": "2026-04-05",
+  "status": "complete",
+  "context": "This is the core and only purpose of the bobbin project: take an RTSP stream and relay it to YouTube Live using FFmpeg. The solution must be containerized using Alpine Linux for minimal image size, configured via environment variables, and deployable via Docker Compose with automatic restart on failure.",
+  "tasks": [
+    {
+      "id": "1",
+      "title": "Create Dockerfile with Alpine Linux and FFmpeg",
+      "status": "complete",
+      "acceptance_criteria": [
+        "Dockerfile exists at project root",
+        "Base image is alpine:latest",
+        "FFmpeg is installed via apk add --no-cache ffmpeg",
+        "ENV declarations exist for RTSP_URL and STREAM_KEY with empty defaults",
+        "CMD uses exec form so FFmpeg runs as PID 1 and receives SIGTERM correctly",
+        "CMD runs ffmpeg with: -nostdin, -rtsp_transport tcp, -i using $RTSP_URL, -c:v copy, -c:a aac -b:a 128k, -f flv output to rtmp://a.rtmp.youtube.com/live2/$STREAM_KEY",
+        "docker build . completes successfully and produces an image under 100MB"
+      ],
+      "files": ["Dockerfile"],
+      "depends_on": []
+    },
+    {
+      "id": "2",
+      "title": "Create Docker Compose configuration",
+      "status": "complete",
+      "acceptance_criteria": [
+        "docker-compose.yml exists at project root",
+        "Defines a single service named youtube-stream",
+        "Service builds from the local Dockerfile (build: .)",
+        "container_name is set to rtsp-youtube-stream",
+        "restart policy is unless-stopped",
+        "Environment variables RTSP_URL and STREAM_KEY are defined with placeholder values",
+        "docker compose config validates successfully (no syntax errors)"
+      ],
+      "files": ["docker-compose.yml"],
+      "depends_on": ["1"]
+    },
+    {
+      "id": "3",
+      "title": "Add .env.example and .gitignore for secrets management",
+      "status": "complete",
+      "acceptance_criteria": [
+        ".env.example exists with RTSP_URL and STREAM_KEY placeholder entries and comments explaining each",
+        ".gitignore exists and includes .env to prevent accidental secret commits",
+        "docker-compose.yml references env_file or environment variables that can be overridden by a .env file"
+      ],
+      "files": [".env.example", ".gitignore", "docker-compose.yml"],
+      "depends_on": ["2"]
+    },
+    {
+      "id": "4",
+      "title": "Add README with usage instructions",
+      "status": "complete",
+      "acceptance_criteria": [
+        "README.md exists at project root",
+        "Documents the project purpose (RTSP to YouTube Live relay)",
+        "Includes prerequisites (Docker, Docker Compose)",
+        "Includes setup steps: copy .env.example to .env, fill in values",
+        "Includes commands to build, start (docker compose up -d), check logs (docker logs -f rtsp-youtube-stream), and stop",
+        "Documents the two required environment variables (RTSP_URL, STREAM_KEY) with descriptions"
+      ],
+      "files": ["README.md"],
+      "depends_on": ["3"]
+    }
+  ]
+}
